@@ -1,0 +1,74 @@
+# ServiceMonitor configuration for Urban Gardening Assistant backend services
+# Version: 1.0.0
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: urban-gardening-backend
+  namespace: monitoring
+  labels:
+    app: urban-gardening-assistant
+    component: backend
+    release: prometheus
+    monitoring: enabled
+  annotations:
+    description: "Prometheus monitoring configuration for Urban Gardening Assistant backend services"
+    maintainer: "DevOps Team"
+spec:
+  # Target services matching these labels
+  selector:
+    matchLabels:
+      app: urban-gardening-assistant
+      component: backend
+      monitoring: enabled
+  
+  # Monitor services in default namespace where backend runs
+  namespaceSelector:
+    matchNames:
+      - default
+
+  # Endpoint configuration for metrics collection
+  endpoints:
+    # API Gateway metrics
+    - port: metrics
+      path: /metrics
+      interval: 30s
+      scrapeTimeout: 10s
+      honorLabels: true
+      scheme: http
+      metricRelabelings:
+        # Keep only relevant metrics
+        - sourceLabels: [__name__]
+          regex: '^(http_requests_total|http_request_duration_seconds|http_errors_total|api_latency_seconds|garden_calculations_total|crop_operations_total|maintenance_schedules_total).*'
+          action: keep
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_pod_name]
+          action: replace
+          targetLabel: pod
+        - sourceLabels: [__meta_kubernetes_service_name]
+          action: replace
+          targetLabel: service
+        - sourceLabels: [__meta_kubernetes_namespace]
+          action: replace
+          targetLabel: namespace
+
+  # Additional monitoring configuration
+  jobLabel: urban-gardening-monitoring
+  targetLabels:
+    - app
+    - component
+    - environment
+  
+  # High availability settings
+  sampleLimit: 10000
+  targetLimit: 100
+
+  # TLS configuration for secure metrics collection
+  tlsConfig:
+    insecureSkipVerify: false
+    serverName: urban-gardening-backend
+
+  # Additional metadata for better observability
+  additionalLabels:
+    team: backend
+    criticality: high
+    sla: "99.9"
