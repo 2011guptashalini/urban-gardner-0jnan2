@@ -1,0 +1,203 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+  namespace: monitoring
+  labels:
+    app: grafana
+    component: dashboards
+    part-of: urban-gardening-assistant
+  annotations:
+    description: "Pre-configured Grafana dashboards for Urban Gardening Assistant monitoring"
+    maintainer: "DevOps Team"
+data:
+  application-metrics.json: |
+    {
+      "title": "Urban Gardening Assistant - Application Metrics",
+      "uid": "uga-app-metrics",
+      "version": 1,
+      "refresh": "1m",
+      "schemaVersion": 30,
+      "time": {
+        "from": "now-6h",
+        "to": "now"
+      },
+      "panels": [
+        {
+          "title": "API Response Times",
+          "type": "graph",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{service=~\"space-calculator|crop-manager\"}[5m])) by (le, service))",
+              "legendFormat": "{{service}} - p95"
+            }
+          ],
+          "thresholds": [
+            {"value": 1, "colorMode": "warning", "op": "gt"},
+            {"value": 2, "colorMode": "critical", "op": "gt"}
+          ],
+          "alert": {
+            "name": "High Latency Alert",
+            "conditions": [
+              {
+                "evaluator": {"params": [2], "type": "gt"},
+                "operator": {"type": "and"},
+                "query": {"params": ["A", "5m", "now"]}
+              }
+            ],
+            "frequency": "1m"
+          }
+        },
+        {
+          "title": "Error Rates",
+          "type": "graph",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+          "targets": [
+            {
+              "expr": "sum(rate(http_requests_total{status=~\"5..\"}[5m])) by (service) / sum(rate(http_requests_total[5m])) by (service) * 100",
+              "legendFormat": "{{service}} errors %"
+            }
+          ],
+          "thresholds": [
+            {"value": 1, "colorMode": "warning", "op": "gt"},
+            {"value": 5, "colorMode": "critical", "op": "gt"}
+          ]
+        },
+        {
+          "title": "Garden Calculations Performance",
+          "type": "graph",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+          "targets": [
+            {
+              "expr": "rate(garden_calculations_total[5m])",
+              "legendFormat": "Calculations/sec"
+            }
+          ]
+        },
+        {
+          "title": "Crop Operations",
+          "type": "graph",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+          "targets": [
+            {
+              "expr": "sum(rate(crop_operations_total[5m])) by (status)",
+              "legendFormat": "{{status}}"
+            }
+          ]
+        }
+      ]
+    }
+
+  infrastructure-metrics.json: |
+    {
+      "title": "Urban Gardening Assistant - Infrastructure",
+      "uid": "uga-infra",
+      "version": 1,
+      "refresh": "1m",
+      "panels": [
+        {
+          "title": "CPU Usage",
+          "type": "gauge",
+          "gridPos": {"h": 8, "w": 8, "x": 0, "y": 0},
+          "targets": [
+            {
+              "expr": "sum(rate(container_cpu_usage_seconds_total{container!=\"\"}[5m])) by (container) * 100",
+              "legendFormat": "{{container}}"
+            }
+          ],
+          "thresholds": [
+            {"value": 70, "colorMode": "warning"},
+            {"value": 85, "colorMode": "critical"}
+          ]
+        },
+        {
+          "title": "Memory Usage",
+          "type": "gauge",
+          "gridPos": {"h": 8, "w": 8, "x": 8, "y": 0},
+          "targets": [
+            {
+              "expr": "sum(container_memory_usage_bytes{container!=\"\"}) by (container) / sum(container_spec_memory_limit_bytes{container!=\"\"}) by (container) * 100",
+              "legendFormat": "{{container}}"
+            }
+          ],
+          "thresholds": [
+            {"value": 80, "colorMode": "warning"},
+            {"value": 90, "colorMode": "critical"}
+          ]
+        },
+        {
+          "title": "Network Traffic",
+          "type": "graph",
+          "gridPos": {"h": 8, "w": 8, "x": 16, "y": 0},
+          "targets": [
+            {
+              "expr": "sum(rate(container_network_receive_bytes_total[5m])) by (container)",
+              "legendFormat": "{{container}} - Received"
+            },
+            {
+              "expr": "sum(rate(container_network_transmit_bytes_total[5m])) by (container)",
+              "legendFormat": "{{container}} - Transmitted"
+            }
+          ]
+        }
+      ]
+    }
+
+  database-metrics.json: |
+    {
+      "title": "Urban Gardening Assistant - Database Performance",
+      "uid": "uga-db",
+      "version": 1,
+      "refresh": "5m",
+      "panels": [
+        {
+          "title": "PostgreSQL Query Performance",
+          "type": "graph",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+          "targets": [
+            {
+              "expr": "rate(pg_stat_database_tup_fetched{datname=\"urban_gardening\"}[5m])",
+              "legendFormat": "Rows Fetched/sec"
+            },
+            {
+              "expr": "rate(pg_stat_database_tup_inserted{datname=\"urban_gardening\"}[5m])",
+              "legendFormat": "Rows Inserted/sec"
+            }
+          ]
+        },
+        {
+          "title": "Redis Cache Performance",
+          "type": "graph",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+          "targets": [
+            {
+              "expr": "redis_keyspace_hits_total / (redis_keyspace_hits_total + redis_keyspace_misses_total) * 100",
+              "legendFormat": "Cache Hit Rate %"
+            }
+          ],
+          "thresholds": [
+            {"value": 80, "colorMode": "warning", "op": "lt"},
+            {"value": 60, "colorMode": "critical", "op": "lt"}
+          ]
+        },
+        {
+          "title": "Database Connections",
+          "type": "stat",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+          "targets": [
+            {
+              "expr": "pg_stat_activity_count{datname=\"urban_gardening\"}",
+              "legendFormat": "Active Connections"
+            }
+          ],
+          "thresholds": {
+            "steps": [
+              {"value": 80, "color": "green"},
+              {"value": 90, "color": "yellow"},
+              {"value": 95, "color": "red"}
+            ]
+          }
+        }
+      ]
+    }
