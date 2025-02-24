@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, shrink-to-fit=no">
+    <meta name="theme-color" content="#2E7D32">
+    <meta name="description" content="Urban Gardening Assistant - Professional tool for optimizing your urban garden planning and maintenance with AI-powered recommendations">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <!-- Open Graph / Social Media -->
+    <meta property="og:title" content="Urban Gardening Assistant">
+    <meta property="og:description" content="Professional urban garden planning and maintenance tool">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="/logo512.png">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Urban Gardening Assistant">
+    <meta name="twitter:description" content="Optimize your urban garden planning and maintenance">
+    <meta name="twitter:image" content="/logo512.png">
+
+    <!-- Security Headers -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self'">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(self)">
+
+    <!-- PWA Support -->
+    <link rel="manifest" href="/manifest.json" crossorigin="use-credentials">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="16x16 32x32">
+    <link rel="apple-touch-icon" href="/logo192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="/logo512.png">
+
+    <!-- Font Preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin="anonymous">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+
+    <title>Urban Gardening Assistant</title>
+
+    <!-- Critical CSS -->
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            background-color: #F5F5F5;
+        }
+        .noscript-message {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            padding: 20px;
+            text-align: center;
+            font-size: 18px;
+            color: #333333;
+            background-color: #F5F5F5;
+        }
+        #root {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+    </style>
+</head>
+<body>
+    <noscript>
+        <div class="noscript-message">
+            For the best urban gardening experience, please enable JavaScript in your browser. 
+            The Urban Gardening Assistant requires JavaScript to provide interactive planning and maintenance features.
+        </div>
+    </noscript>
+    
+    <div id="root" role="main" aria-label="Urban Gardening Assistant Application"></div>
+
+    <!-- Application Entry Point -->
+    <script type="module" src="/src/index.tsx"></script>
+</body>
+</html>
