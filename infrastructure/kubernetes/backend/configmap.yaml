@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: default
+  labels:
+    app: urban-gardening-assistant
+    component: backend
+    environment: production
+data:
+  # Core service configuration
+  environment: "production"
+  service_name: "urban-gardening-assistant"
+  
+  # Database configuration
+  db_host: "postgres-rds.default.svc.cluster.local"
+  db_port: "5432"
+  db_name: "urban_gardening"
+  db_ssl_mode: "require"
+  db_pool_max_connections: "100"
+  db_pool_idle_timeout: "300s"
+  db_max_idle_conns: "25"
+  db_max_open_conns: "25"
+  db_conn_timeout: "30s"
+  db_read_timeout: "30s"
+  db_write_timeout: "30s"
+  db_enable_auto_migration: "true"
+  
+  # Redis configuration
+  redis_host: "redis.default.svc.cluster.local"
+  redis_port: "6379"
+  redis_db: "0"
+  redis_pool_size: "50"
+  redis_conn_timeout: "5s"
+  redis_read_timeout: "3s"
+  redis_write_timeout: "3s"
+  redis_max_retries: "3"
+  redis_retry_backoff: "100ms"
+  redis_idle_timeout: "300s"
+  redis_enable_tls: "true"
+  
+  # API configuration
+  api_host: "0.0.0.0"
+  api_port: "8080"
+  api_read_timeout: "30s"
+  api_write_timeout: "30s"
+  api_idle_timeout: "60s"
+  api_shutdown_timeout: "30s"
+  api_max_request_size: "10485760" # 10MB
+  api_enable_cors: "true"
+  api_allowed_origins: "https://*.urban-gardening-assistant.com"
+  api_allowed_methods: "GET,POST,PUT,DELETE,OPTIONS"
+  api_allowed_headers: "Authorization,Content-Type,X-Request-ID"
+  api_enable_tls: "true"
+  api_max_header_size: "1048576" # 1MB
+  api_enable_request_logging: "true"
+  api_rate_limit: "1000"
+  api_rate_limit_window: "1m"
+  
+  # Logging configuration
+  log_level: "info"
+  log_format: "json"
+  
+  # Monitoring configuration
+  metrics_enabled: "true"
+  tracing_enabled: "true"
+  health_check_interval: "30s"
+  health_check_timeout: "5s"
+  
+  # Resource limits and requests
+  resource_limits_cpu: "1000m"
+  resource_limits_memory: "1Gi"
+  resource_requests_cpu: "500m"
+  resource_requests_memory: "512Mi"
+  
+  # Feature flags
+  feature_flags: |
+    ai_recommendations=true
+    automated_scheduling=true
+    advanced_analytics=true
+    
+  # Backup and maintenance
+  backup_enabled: "true"
+  backup_schedule: "0 2 * * *"
+  backup_retention_days: "30"
+  maintenance_window: "Sun:02:00-Sun:06:00"
