@@ -1,0 +1,123 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Alertmanager
+metadata:
+  name: alertmanager-main
+  namespace: monitoring
+  labels:
+    app: alertmanager
+    component: monitoring
+    part-of: urban-gardening-assistant
+spec:
+  version: v0.25.0
+  replicas: 2
+  retention: 120h
+  storage:
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 200m
+      memory: 512Mi
+  securityContext:
+    fsGroup: 2000
+    runAsNonRoot: true
+    runAsUser: 1000
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - alertmanager
+          topologyKey: kubernetes.io/hostname
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-config
+  namespace: monitoring
+data:
+  alertmanager.yml: |
+    global:
+      resolve_timeout: 5m
+      smtp_smarthost: smtp.urbangardening.com:587
+      smtp_from: alerts@urbangardening.com
+
+    route:
+      group_by: ['job', 'alertname', 'severity', 'service']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 12h
+      receiver: default
+      routes:
+        - match:
+            service: space-calculator
+            severity: critical
+          receiver: critical-alerts
+          group_wait: 10s
+          repeat_interval: 5m
+        - match:
+            service: crop-manager
+            severity: critical
+          receiver: critical-alerts
+          group_wait: 10s
+          repeat_interval: 5m
+        - match:
+            service: ai-advisor
+            severity: critical
+          receiver: critical-alerts
+          group_wait: 10s
+          repeat_interval: 5m
+
+    receivers:
+      - name: default
+        email_configs:
+          - to: team@urbangardening.com
+            send_resolved: true
+            headers:
+              subject: '{{ template "email.default.subject" . }}'
+
+      - name: critical-alerts
+        email_configs:
+          - to: oncall@urbangardening.com
+            send_resolved: true
+            headers:
+              subject: '{{ template "email.critical.subject" . }}'
+        pagerduty_configs:
+          - service_key: YOUR_PAGERDUTY_SERVICE_KEY
+            description: '{{ template "pagerduty.default.description" . }}'
+
+    templates:
+      - /etc/alertmanager/template/*.tmpl
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager-main
+  namespace: monitoring
+  labels:
+    app: alertmanager
+    component: monitoring
+spec:
+  type: ClusterIP
+  ports:
+    - name: web
+      port: 9093
+      targetPort: web
+      protocol: TCP
+  selector:
+    app: alertmanager
