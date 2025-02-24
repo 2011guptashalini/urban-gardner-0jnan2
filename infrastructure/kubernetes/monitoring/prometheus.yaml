@@ -1,0 +1,190 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: prometheus-main
+  namespace: monitoring
+  labels:
+    app: prometheus
+    component: monitoring
+    part-of: urban-gardening-assistant
+  annotations:
+    description: "Prometheus monitoring for Urban Gardening Assistant"
+    maintainer: "DevOps Team"
+spec:
+  version: v2.45.0  # prometheus/prometheus v2.45.0
+  replicas: 2  # High availability setup
+  retention: 15d  # PROMETHEUS_RETENTION global
+  serviceAccountName: prometheus
+  
+  securityContext:
+    fsGroup: 2000
+    runAsNonRoot: true
+    runAsUser: 1000
+
+  # Pod anti-affinity for high availability
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - prometheus
+          topologyKey: kubernetes.io/hostname
+
+  # Service discovery configuration
+  serviceMonitorSelector:
+    matchLabels:
+      app: urban-gardening-assistant
+      release: prometheus
+
+  # Alerting configuration
+  alerting:
+    alertmanagers:
+      - name: alertmanager-main
+        namespace: monitoring
+        port: web
+
+  # Resource requirements
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "2Gi"
+    limits:
+      cpu: "1000m"
+      memory: "4Gi"
+
+  # Persistent storage configuration
+  storage:
+    volumeClaimTemplate:
+      spec:
+        storageClassName: standard
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 50Gi  # PROMETHEUS_STORAGE_SIZE global
+
+  # Scrape configuration
+  scrapeConfig:
+    scrapeInterval: 30s  # SCRAPE_INTERVAL global
+    evaluationInterval: 30s
+    
+  # Additional scrape configurations
+  additionalScrapeConfigs:
+    - job_name: 'urban-gardening-backend'
+      metrics_path: '/metrics'
+      scheme: http
+      kubernetes_sd_configs:
+        - role: pod
+          namespaceSelector:
+            matchNames:
+              - default
+          selectors:
+            - role: pod
+              label:
+                app: urban-gardening-assistant
+                component: backend
+      relabel_configs:
+        - source_labels: [__meta_kubernetes_pod_label_app]
+          target_label: app
+        - source_labels: [__meta_kubernetes_pod_label_component]
+          target_label: component
+        - source_labels: [__meta_kubernetes_pod_name]
+          target_label: pod
+      metric_relabel_configs:
+        - source_labels: [__name__]
+          regex: '^(http_requests_total|http_request_duration_seconds|garden_calculations_total|crop_operations_total|maintenance_schedules_total).*'
+          action: keep
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-main
+  namespace: monitoring
+  labels:
+    app: prometheus
+    component: monitoring
+    part-of: urban-gardening-assistant
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9090"
+spec:
+  type: ClusterIP
+  ports:
+    - name: web
+      port: 9090
+      targetPort: web
+      protocol: TCP
+  selector:
+    app: prometheus
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: urban-gardening-alerts
+  namespace: monitoring
+  labels:
+    app: prometheus
+    component: monitoring
+    part-of: urban-gardening-assistant
+spec:
+  groups:
+    - name: urban-gardening.rules
+      rules:
+        # API Gateway alerts
+        - alert: HighErrorRate
+          expr: sum(rate(http_errors_total[5m])) / sum(rate(http_requests_total[5m])) > 0.05
+          for: 5m
+          labels:
+            severity: critical
+            service: api-gateway
+          annotations:
+            summary: "High error rate detected"
+            description: "Error rate is above 5% for the last 5 minutes"
+
+        # Garden Calculator alerts
+        - alert: SlowCalculations
+          expr: histogram_quantile(0.95, sum(rate(garden_calculations_total_bucket[5m])) by (le)) > 2
+          for: 5m
+          labels:
+            severity: warning
+            service: space-calculator
+          annotations:
+            summary: "Slow garden calculations detected"
+            description: "95th percentile of calculation time is above 2 seconds"
+
+        # Crop Manager alerts
+        - alert: CropOperationFailures
+          expr: rate(crop_operations_total{status="failed"}[5m]) > 0
+          for: 5m
+          labels:
+            severity: warning
+            service: crop-manager
+          annotations:
+            summary: "Crop operation failures detected"
+            description: "Failed crop operations in the last 5 minutes"
+
+        # System alerts
+        - alert: HighMemoryUsage
+          expr: container_memory_usage_bytes{container!=""} / container_spec_memory_limit_bytes{container!=""} * 100 > 85
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High memory usage detected"
+            description: "Container memory usage is above 85%"
+
+        - alert: HighCPUUsage
+          expr: rate(container_cpu_usage_seconds_total{container!=""}[5m]) * 100 > 80
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High CPU usage detected"
+            description: "Container CPU usage is above 80%"
