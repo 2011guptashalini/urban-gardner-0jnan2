@@ -1,0 +1,72 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: urban-gardening-certificate
+  namespace: urban-gardening
+  labels:
+    app: urban-gardening
+    component: certificate
+    environment: production
+    managed-by: cert-manager
+    security-tier: external
+  annotations:
+    cert-manager.io/issue-temporary-certificate: "true"
+    cert-manager.io/private-key-rotation-policy: "Always"
+    monitoring.cert-manager.io/enabled: "true"
+    cert-manager.io/revocation-reason: "unspecified"
+
+spec:
+  # Secret name where the certificate and private key will be stored
+  secretName: urban-gardening-tls
+  
+  # Certificate validity duration (90 days)
+  duration: "2160h"
+  
+  # Renew certificate 15 days before expiry
+  renewBefore: "360h"
+  
+  # Private key configuration
+  privateKey:
+    algorithm: RSA
+    encoding: PKCS1
+    size: 2048
+    rotationPolicy: Always
+  
+  # Certificate subject information
+  subject:
+    organizations:
+      - Urban Gardening Assistant
+    organizationalUnits:
+      - Security
+    countries:
+      - US
+    localities:
+      - Production
+    provinces:
+      - Infrastructure
+  
+  # Domain names to be included in the certificate
+  commonName: urban-gardening.example.com
+  dnsNames:
+    - urban-gardening.example.com
+    - api.urban-gardening.example.com
+    - www.urban-gardening.example.com
+  
+  # Certificate usages
+  usages:
+    - server auth
+    - client auth
+  
+  # Java keystore configuration
+  keystores:
+    jks:
+      create: true
+      passwordSecretRef:
+        name: keystore-password
+        key: password
+  
+  # Reference to the certificate issuer
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+    group: cert-manager.io
