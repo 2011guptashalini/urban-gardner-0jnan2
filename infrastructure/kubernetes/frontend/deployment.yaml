@@ -1,0 +1,131 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: urban-gardening-frontend
+  namespace: urban-gardening
+  labels:
+    app: urban-gardening
+    tier: frontend
+    component: web
+    environment: production
+  annotations:
+    kubernetes.io/change-cause: "Initial deployment of frontend application"
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "80"
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: urban-gardening
+      tier: frontend
+  template:
+    metadata:
+      labels:
+        app: urban-gardening
+        tier: frontend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "80"
+    spec:
+      containers:
+        - name: frontend
+          image: urban-gardening/frontend:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /startup
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 30
+          envFrom:
+            - configMapRef:
+                name: frontend-config
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+      securityContext:
+        fsGroup: 1000
+      terminationGracePeriodSeconds: 30
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: urban-gardening-frontend-hpa
+  namespace: urban-gardening
+  labels:
+    app: urban-gardening
+    tier: frontend
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: urban-gardening-frontend
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 60
