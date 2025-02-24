@@ -1,0 +1,44 @@
+# Last updated: 2024
+
+# Default rules for all web crawlers
+User-agent: *
+Allow: /
+Allow: /login
+Allow: /register
+Allow: /about
+Allow: /contact
+Allow: /help
+Allow: /terms
+Allow: /privacy
+Disallow: /api/
+Disallow: /maintenance/
+Disallow: /profile/
+Disallow: /garden/
+Disallow: /crops/
+Disallow: /schedule/
+Disallow: /settings/
+Disallow: /user/
+Disallow: /admin/
+Crawl-delay: 10
+
+# Google crawler specific rules
+User-agent: Googlebot
+Allow: /
+Allow: /sitemap.xml
+Disallow: /api/
+Disallow: /internal/
+Crawl-delay: 5
+
+# Bing crawler specific rules
+User-agent: Bingbot
+Allow: /
+Allow: /sitemap.xml
+Disallow: /api/
+Disallow: /internal/
+Crawl-delay: 8
+
+# Sitemap location
+Sitemap: https://urbangardening.com/sitemap.xml
+
+# Canonical host
+Host: https://urbangardening.com
