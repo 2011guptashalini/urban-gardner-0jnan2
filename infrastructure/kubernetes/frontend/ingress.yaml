@@ -1,0 +1,69 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: urban-gardening-frontend-ingress
+  namespace: urban-gardening
+  labels:
+    app: urban-gardening
+    tier: frontend
+    environment: production
+    component: web
+    managed-by: kubernetes
+  annotations:
+    # Ingress controller configuration
+    kubernetes.io/ingress.class: "nginx"
+    
+    # SSL/TLS configuration
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    
+    # Proxy configuration
+    nginx.ingress.kubernetes.io/proxy-body-size: "8m"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    
+    # Performance optimization
+    nginx.ingress.kubernetes.io/server-snippets: |
+      gzip on;
+      gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+      gzip_min_length 1000;
+      gzip_proxied any;
+    
+    # Security headers
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "X-Frame-Options: DENY";
+      more_set_headers "X-Content-Type-Options: nosniff";
+      more_set_headers "X-XSS-Protection: 1; mode=block";
+      more_set_headers "Strict-Transport-Security: max-age=31536000; includeSubDomains; preload";
+      more_set_headers "Referrer-Policy: strict-origin-when-cross-origin";
+      more_set_headers "Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.urban-gardening.example.com";
+
+spec:
+  tls:
+    - hosts:
+        - urban-gardening.example.com
+        - www.urban-gardening.example.com
+      secretName: urban-gardening-tls
+  rules:
+    - host: urban-gardening.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: urban-gardening-frontend
+                port:
+                  number: 80
+    - host: www.urban-gardening.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: urban-gardening-frontend
+                port:
+                  number: 80
