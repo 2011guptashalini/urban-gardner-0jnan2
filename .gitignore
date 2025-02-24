@@ -1,0 +1,81 @@
+# Dependencies
+/node_modules
+/dist
+/build
+/.pnp
+.pnp.js
+/vendor/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.key
+*.pem
+
+# Build outputs
+/src/web/dist
+/src/web/build
+/src/backend/bin
+*.exe
+*.dll
+*.so
+*.dylib
+
+# IDE and Editor files
+/.idea
+/.vscode
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Testing and Coverage
+/coverage
+*.test.js.snap
+*.test
+*.out
+
+# Logs and debugging
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+debug.log
+*.log
+
+# Go specific
+*.exe~
+go.sum
+go.work
+
+# Infrastructure
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraform/
+terraform.tfstate.backup
+kubeconfig
+*.kubeconfig
+
+# Cache directories
+.npm
+.eslintcache
+.stylelintcache
+.parcel-cache
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.cache
+*.pid
+*.seed
+*.pid.lock
+
+# Project specific
+/src/web/.next
+/src/web/.cache
+/src/backend/tmp
+docker-compose.override.yml
