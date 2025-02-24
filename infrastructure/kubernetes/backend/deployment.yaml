@@ -1,0 +1,234 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: urban-gardening-backend
+  namespace: default
+  labels:
+    app: urban-gardening-assistant
+    component: backend
+    environment: production
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "metrics"
+    backup.velero.io/backup-volumes: "config-volume,secrets-volume"
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: urban-gardening-assistant
+      component: backend
+  template:
+    metadata:
+      labels:
+        app: urban-gardening-assistant
+        component: backend
+      annotations:
+        checksum/config: "${CHECKSUM}"
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "metrics"
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - urban-gardening-assistant
+            topologyKey: "kubernetes.io/hostname"
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+      - name: api-gateway
+        image: urban-gardening/api-gateway:latest
+        imagePullPolicy: Always
+        ports:
+        - name: http
+          containerPort: 8080
+        - name: metrics
+          containerPort: 9090
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "512Mi"
+          limits:
+            cpu: "1000m"
+            memory: "1Gi"
+        env:
+        - name: SERVICE_NAME
+          value: "urban-gardening-assistant"
+        - name: ENVIRONMENT
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: environment
+        envFrom:
+        - configMapRef:
+            name: backend-config
+        - secretRef:
+            name: backend-secrets
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 5
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config
+          readOnly: true
+        - name: secrets-volume
+          mountPath: /app/secrets
+          readOnly: true
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+
+      - name: calculator
+        image: urban-gardening/calculator:latest
+        imagePullPolicy: Always
+        ports:
+        - name: http
+          containerPort: 8081
+        - name: metrics
+          containerPort: 9091
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+        env:
+        - name: SERVICE_NAME
+          value: "garden-calculator"
+        envFrom:
+        - configMapRef:
+            name: backend-config
+        - secretRef:
+            name: backend-secrets
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+
+      - name: crop-manager
+        image: urban-gardening/crop-manager:latest
+        imagePullPolicy: Always
+        ports:
+        - name: http
+          containerPort: 8082
+        - name: metrics
+          containerPort: 9092
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+        env:
+        - name: SERVICE_NAME
+          value: "crop-manager"
+        envFrom:
+        - configMapRef:
+            name: backend-config
+        - secretRef:
+            name: backend-secrets
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+
+      - name: scheduler
+        image: urban-gardening/scheduler:latest
+        imagePullPolicy: Always
+        ports:
+        - name: http
+          containerPort: 8083
+        - name: metrics
+          containerPort: 9093
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+        env:
+        - name: SERVICE_NAME
+          value: "maintenance-scheduler"
+        envFrom:
+        - configMapRef:
+            name: backend-config
+        - secretRef:
+            name: backend-secrets
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+
+      volumes:
+      - name: config-volume
+        configMap:
+          name: backend-config
+      - name: secrets-volume
+        secret:
+          secretName: backend-secrets
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: urban-gardening-backend
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: urban-gardening-backend
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
