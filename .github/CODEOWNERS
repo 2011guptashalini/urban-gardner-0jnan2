@@ -1,0 +1,66 @@
+# Global owners - required for all changes
+* @tech-leads @security-team
+
+# Frontend ownership
+/src/web/ @frontend-team @tech-leads
+*.ts @frontend-team
+*.tsx @frontend-team
+*.test.tsx @qa-team @frontend-team
+
+# Backend ownership
+/src/backend/ @backend-team @tech-leads
+*.go @backend-team
+*_test.go @qa-team @backend-team
+
+# Service-specific ownership
+/src/backend/internal/ai/ @ai-team @backend-team @security-team
+/src/backend/internal/calculator/ @backend-team @tech-leads
+/src/backend/internal/cropmanager/ @backend-team @tech-leads
+/src/backend/internal/scheduler/ @backend-team @tech-leads
+
+# Infrastructure and deployment
+/infrastructure/ @devops-team @security-team
+*.tf @devops-team @security-team
+*.yaml @devops-team
+
+# Database
+*.sql @database-team @backend-team @security-team
+
+# Documentation
+/docs/ @tech-leads @backend-team @frontend-team
+
+# Security-sensitive areas
+/.github/ @security-team @tech-leads
+/src/backend/internal/auth/ @security-team @backend-team
+/src/backend/internal/crypto/ @security-team @backend-team
+
+# Configuration files
+*.config.js @tech-leads @frontend-team
+*.config.ts @tech-leads @frontend-team
+*.json @tech-leads
+
+# Build and deployment scripts
+/scripts/ @devops-team @tech-leads
+*.sh @devops-team @tech-leads
+
+# Test files and fixtures
+/test/ @qa-team
+/fixtures/ @qa-team
+/mocks/ @qa-team
+
+# API definitions
+/api/ @backend-team @frontend-team @tech-leads
+*.proto @backend-team @tech-leads
+
+# Dependencies
+package.json @frontend-team @tech-leads
+go.mod @backend-team @tech-leads
+go.sum @backend-team @tech-leads
+
+# CI/CD
+/.github/workflows/ @devops-team @security-team
+/.github/actions/ @devops-team @security-team
+
+# Environment configurations
+*.env.* @security-team @devops-team
+/config/ @security-team @devops-team
