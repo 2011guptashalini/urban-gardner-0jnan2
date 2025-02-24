@@ -1,0 +1,460 @@
+openapi: 3.0.0
+info:
+  title: Urban Gardening Assistant API
+  description: API for managing urban garden planning and maintenance
+  version: 1.0.0
+  contact:
+    name: Urban Gardening Assistant Team
+    url: https://urbangardening.example.com
+
+servers:
+  - url: /api/v1
+    description: API version 1
+
+tags:
+  - name: Gardens
+    description: Garden space planning operations
+  - name: Crops
+    description: Crop management operations
+  - name: Maintenance
+    description: Maintenance scheduling operations
+
+paths:
+  /gardens:
+    get:
+      tags: [Gardens]
+      summary: List all gardens
+      operationId: listGardens
+      parameters:
+        - name: page
+          in: query
+          description: Page number for pagination
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: List of gardens retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListGardensResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+        - bearerAuth: []
+
+    post:
+      tags: [Gardens]
+      summary: Create a new garden
+      operationId: createGarden
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGardenRequest'
+      responses:
+        '201':
+          description: Garden created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GardenResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+      security:
+        - bearerAuth: []
+
+  /gardens/{gardenId}:
+    parameters:
+      - name: gardenId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Gardens]
+      summary: Get garden details
+      operationId: getGarden
+      responses:
+        '200':
+          description: Garden details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GardenResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+        - bearerAuth: []
+
+    put:
+      tags: [Gardens]
+      summary: Update garden details
+      operationId: updateGarden
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGardenRequest'
+      responses:
+        '200':
+          description: Garden updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GardenResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+        - bearerAuth: []
+
+  /gardens/{gardenId}/crops:
+    parameters:
+      - name: gardenId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Crops]
+      summary: List crops in a garden
+      operationId: listCrops
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: List of crops retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CropListResponse'
+      security:
+        - bearerAuth: []
+
+    post:
+      tags: [Crops]
+      summary: Add a crop to garden
+      operationId: createCrop
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CropRequest'
+      responses:
+        '201':
+          description: Crop added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CropResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+      security:
+        - bearerAuth: []
+
+  /maintenance:
+    get:
+      tags: [Maintenance]
+      summary: List maintenance tasks
+      operationId: listMaintenanceTasks
+      parameters:
+        - name: cropId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: List of maintenance tasks retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceListResponse'
+      security:
+        - bearerAuth: []
+
+    post:
+      tags: [Maintenance]
+      summary: Create maintenance task
+      operationId: createMaintenanceTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaintenanceRequest'
+      responses:
+        '201':
+          description: Maintenance task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+      security:
+        - bearerAuth: []
+
+components:
+  schemas:
+    Dimensions:
+      type: object
+      required: [length, width, unit]
+      properties:
+        length:
+          type: number
+          format: float
+          minimum: 10.0
+          maximum: 1000.0
+        width:
+          type: number
+          format: float
+          minimum: 10.0
+          maximum: 1000.0
+        unit:
+          type: string
+          enum: [feet, meters]
+
+    CreateGardenRequest:
+      type: object
+      required: [dimensions, soilType, sunlight]
+      properties:
+        dimensions:
+          $ref: '#/components/schemas/Dimensions'
+        soilType:
+          type: string
+          enum: [red_soil, sandy_soil, loamy_soil, clay_soil, black_soil]
+        sunlight:
+          type: string
+          enum: [full_sun, partial_shade, full_shade]
+
+    UpdateGardenRequest:
+      type: object
+      properties:
+        dimensions:
+          $ref: '#/components/schemas/Dimensions'
+        soilType:
+          type: string
+          enum: [red_soil, sandy_soil, loamy_soil, clay_soil, black_soil]
+        sunlight:
+          type: string
+          enum: [full_sun, partial_shade, full_shade]
+
+    GardenResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        dimensions:
+          $ref: '#/components/schemas/Dimensions'
+        soilType:
+          type: string
+        sunlight:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ListGardensResponse:
+      type: object
+      properties:
+        gardens:
+          type: array
+          items:
+            $ref: '#/components/schemas/GardenResponse'
+        total:
+          type: integer
+        page:
+          type: integer
+        perPage:
+          type: integer
+
+    CropRequest:
+      type: object
+      required: [name, quantityNeeded, growBags, bagSize]
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 50
+        quantityNeeded:
+          type: integer
+          minimum: 1
+          maximum: 1000
+        growBags:
+          type: integer
+          minimum: 1
+          maximum: 100
+        bagSize:
+          type: string
+          enum: ["8\"", "10\"", "12\"", "14\""]
+
+    CropResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        gardenId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        quantityNeeded:
+          type: integer
+        growBags:
+          type: integer
+        bagSize:
+          type: string
+        estimatedYield:
+          type: number
+          format: float
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    MaintenanceRequest:
+      type: object
+      required: [cropId, taskType, frequency, amount, unit, preferredTime]
+      properties:
+        cropId:
+          type: string
+          format: uuid
+        taskType:
+          type: string
+          enum: [Fertilizer, Water, Composting, Pruning, "Pest Control"]
+        frequency:
+          type: string
+          enum: [Daily, Twice-Daily, Weekly, Bi-weekly, Monthly]
+        amount:
+          type: number
+          format: float
+          minimum: 0.1
+        unit:
+          type: string
+          enum: [ml, g]
+        preferredTime:
+          type: string
+          pattern: "^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
+        aiRecommended:
+          type: boolean
+          default: false
+        environmentalFactors:
+          type: object
+          required: [temperature, humidity, lightLevel]
+          properties:
+            temperature:
+              type: number
+            humidity:
+              type: number
+            lightLevel:
+              type: number
+
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: string
+
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    TooManyRequests:
+      description: Rate limit exceeded
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
