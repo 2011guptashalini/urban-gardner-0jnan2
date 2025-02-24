@@ -1,0 +1,95 @@
+{
+  "name": "Urban Gardening Assistant",
+  "short_name": "Garden Assist",
+  "description": "Optimize your urban garden planning and maintenance with AI-powered recommendations and space optimization",
+  "icons": [
+    {
+      "src": "/logo192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo48.png",
+      "sizes": "48x48",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#2E7D32",
+  "background_color": "#F5F5F5",
+  "categories": [
+    "gardening",
+    "productivity",
+    "utilities",
+    "lifestyle"
+  ],
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "New Garden Plan",
+      "url": "/garden/new",
+      "description": "Create a new garden plan",
+      "icons": [
+        {
+          "src": "/shortcuts/new-garden.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "My Gardens",
+      "url": "/gardens",
+      "description": "View your garden plans",
+      "icons": [
+        {
+          "src": "/shortcuts/my-gardens.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/garden-planner.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "platform": "wide",
+      "label": "Garden Space Planner"
+    },
+    {
+      "src": "/screenshots/maintenance.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "platform": "wide",
+      "label": "Maintenance Schedule"
+    }
+  ],
+  "related_applications": [],
+  "lang": "en-US",
+  "dir": "ltr"
+}
